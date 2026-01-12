@@ -1,6 +1,6 @@
 {
   "name": "obsidian-tapgloss",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Obsidian plugin for selection LLM lookup (word or sentence).",
   "main": "main.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "llm",
     "dictionary"
   ],
-  "author": "",
+  "author": "jesse-ux",
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",

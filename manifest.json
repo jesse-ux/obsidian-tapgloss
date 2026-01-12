@@ -1,10 +1,10 @@
 {
   "id": "tapgloss",
   "name": "TapGloss",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "1.5.12",
   "description": "Lookup selected words or sentences with an LLM.",
-  "author": "",
-  "authorUrl": "",
+  "author": "jesse-ux",
+  "authorUrl": "https://github.com/jesse-ux",
   "isDesktopOnly": true
 }
