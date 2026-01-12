@@ -72,7 +72,7 @@ export async function appendToCanvas(app: App, rawPath: string, text: string): P
 }
 
 function normalizeCanvasPath(rawPath: string): string {
-  const trimmed = rawPath.trim() || "TrickyWords.canvas";
+  const trimmed = rawPath.trim() || "tricky-words.canvas";
   return trimmed.endsWith(".canvas") ? trimmed : `${trimmed}.canvas`;
 }
 

@@ -25,7 +25,7 @@ npm run build
 - `Language`: affects default prompts when you restore defaults.
 - `Word Prompt` / `Sentence Prompt`: editable + restore defaults
 - `Sentence length threshold`: default 28
-- `Canvas path`: default `TrickyWords.canvas`
+- `Canvas path`: default `tricky-words.canvas`
 - `Icon text`, `Icon size`, and popover colors for basic theming
 
 ## Usage

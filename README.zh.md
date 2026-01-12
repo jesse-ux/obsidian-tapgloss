@@ -25,7 +25,7 @@ npm run build
 - `Language`：影响恢复默认提示词时使用的语言
 - `Word Prompt` / `Sentence Prompt`：可编辑 + 恢复默认
 - `Sentence length threshold`：默认 28
-- `Canvas path`：默认 `TrickyWords.canvas`
+- `Canvas path`：默认 `tricky-words.canvas`
 - `图标文本/大小` 与 `气泡颜色` 可用于基础主题配置
 
 ## 使用

@@ -71,7 +71,7 @@ export const DEFAULT_SETTINGS: SelectionLookupSettings = {
   sentenceUserPrompt: DEFAULT_SENTENCE_USER_PROMPT,
   sentenceLengthThreshold: 28,
   enableResponseFormat: true,
-  canvasPath: "TrickyWords.canvas",
+  canvasPath: "tricky-words.canvas",
   language: "zh",
   iconText: "🤔",
   iconSize: 13,
@@ -269,7 +269,7 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
       .setDesc(t.canvasPath.desc)
       .addText((text) =>
         text
-          .setPlaceholder("Example: TrickyWords.canvas")
+          .setPlaceholder("Example: tricky-words.canvas")
           .setValue(this.plugin.settings.canvasPath)
           .onChange((value) => {
             this.plugin.settings.canvasPath = value.trim();
@@ -422,7 +422,7 @@ function getLabels(language: "zh" | "en") {
         desc: "OpenAI-compatible base URL, e.g. https://api.openai.com or http://localhost:11434"
       },
       apiKey: { name: "API key", desc: "Stored in plaintext in Obsidian settings." },
-      modelId: { name: "Model ID", desc: "Example: gpt-4o-mini" },
+      modelId: { name: "Model id", desc: "Example: gpt-4o-mini" },
       sentenceThreshold: {
         name: "Sentence length threshold",
         desc: "Selections longer than this will be treated as sentences."
@@ -441,7 +441,7 @@ function getLabels(language: "zh" | "en") {
       popoverTextColor: { name: "Popover text color", desc: "Text color for the popover." },
       canvasPath: {
         name: "Canvas path",
-        desc: "Default .canvas file for saving cards (e.g. TrickyWords.canvas)."
+        desc: "Default .canvas file for saving cards (e.g. tricky-words.canvas)."
       },
       responseFormat: {
         name: "Enable response_format (JSON)",
@@ -455,7 +455,7 @@ function getLabels(language: "zh" | "en") {
         testingStatus: "Testing connection...",
         okStatus: "Connection ok.",
         failedStatus: "Connection failed.",
-        missingConfig: "Fill in the base URL, API key, and model ID."
+        missingConfig: "Fill in the base URL, API key, and model id."
       },
       wordPrompt: {
         title: "Word prompt",
@@ -476,7 +476,7 @@ function getLabels(language: "zh" | "en") {
     title: "TapGloss 设置",
     apiBaseUrl: { name: "API base URL", desc: "OpenAI 兼容地址，例如 https://api.openai.com 或 https://api.moonshot.cn/v1" },
     apiKey: { name: "API key", desc: "明文存储在 Obsidian 设置中。" },
-    modelId: { name: "Model ID", desc: "例如：gpt-4o-mini" },
+    modelId: { name: "Model id", desc: "例如：gpt-4o-mini" },
     sentenceThreshold: { name: "句子判定阈值", desc: "选中文本长度超过阈值将被视为句子。" },
     language: { name: "语言", desc: "控制界面文案与默认提示词。", zh: "中文", en: "英文" },
     iconText: { name: "图标文本", desc: "选区图标显示的文字或 emoji。" },
@@ -485,7 +485,7 @@ function getLabels(language: "zh" | "en") {
     iconTextColor: { name: "图标文字色", desc: "选区图标的文字颜色。" },
     popoverBgColor: { name: "气泡背景色", desc: "气泡的背景颜色。" },
     popoverTextColor: { name: "气泡文字色", desc: "气泡的文字颜色。" },
-    canvasPath: { name: "Canvas 路径", desc: "保存卡片的默认 .canvas 文件（如 TrickyWords.canvas）。" },
+    canvasPath: { name: "Canvas 路径", desc: "保存卡片的默认 .canvas 文件（如 tricky-words.canvas）。" },
     responseFormat: { name: "启用 response_format (JSON)", desc: "若 API 不支持，将自动回退。" },
     testConnection: {
       name: "测试连接",
@@ -495,7 +495,7 @@ function getLabels(language: "zh" | "en") {
       testingStatus: "正在测试连接...",
       okStatus: "连接成功。",
       failedStatus: "连接失败。",
-      missingConfig: "请填写 API Base URL、API Key 和 Model ID。"
+      missingConfig: "请填写 API base URL、API key 和 model id。"
     },
     wordPrompt: { title: "单词提示词", system: "System prompt", user: "User prompt", restore: "恢复默认单词提示词" },
     sentencePrompt: { title: "句子提示词", system: "System prompt", user: "User prompt", restore: "恢复默认句子提示词" }
