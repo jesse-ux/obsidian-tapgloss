@@ -30,8 +30,8 @@ npm run build
 
 ## 使用
 
-- 在编辑器或 PDF 中选中文本，会出现 `LLM` 图标。
-- 点击图标触发 Smart Lookup。
+- 在编辑器或 PDF 中选中文本，会出现 🤔 图标。
+- 点击 🤔 触发 Smart Lookup。
 - Commands（可绑定快捷键）：
   - `Smart Lookup`
   - `Translate Selection`

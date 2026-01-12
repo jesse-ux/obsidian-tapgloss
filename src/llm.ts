@@ -1,4 +1,4 @@
-import { requestUrl } from "obsidian";
+import { requestUrl, RequestUrlParam } from "obsidian";
 
 export type LookupMode = "word" | "sentence";
 
@@ -35,10 +35,20 @@ function buildUserPrompt(template: string, selection: string, contextLine: strin
     .replace("{contextLine}", contextLine ?? "");
 }
 
-function extractContent(data: any): string {
-  const content = data?.choices?.[0]?.message?.content;
+interface ChatCompletionResponse {
+  choices?: Array<{ message?: { content?: string } }>;
+  error?: { message?: string };
+}
+
+interface RequestUrlParamWithTimeout extends RequestUrlParam {
+  timeout?: number;
+  signal?: AbortSignal;
+}
+
+function extractContent(data: unknown): string {
+  const content = (data as ChatCompletionResponse | null)?.choices?.[0]?.message?.content;
   if (!content) {
-    const errorMessage = data?.error?.message ?? "No content in response.";
+    const errorMessage = (data as ChatCompletionResponse | null)?.error?.message ?? "No content in response.";
     throw new Error(errorMessage);
   }
   return String(content);
@@ -46,7 +56,7 @@ function extractContent(data: any): string {
 
 function isResponseFormatError(error: unknown): boolean {
   if (!error) return false;
-  const message = (error as any).message ?? "";
+  const message = (error as { message?: string } | null)?.message ?? "";
   return typeof message === "string" && message.toLowerCase().includes("response_format");
 }
 
@@ -66,7 +76,7 @@ export async function requestLookup(options: LlmRequestOptions): Promise<LlmResp
   });
 
   const doRequest = async (useResponseFormat: boolean): Promise<LlmResponse> => {
-    const response = await requestUrl({
+    const requestParams: RequestUrlParamWithTimeout = {
       url,
       method: "POST",
       headers: {
@@ -74,9 +84,11 @@ export async function requestLookup(options: LlmRequestOptions): Promise<LlmResp
         "Content-Type": "application/json"
       },
       body: JSON.stringify(requestBody(useResponseFormat)),
-      signal: options.signal,
-      timeout: 20000
-    } as any);
+      timeout: 20000,
+      signal: options.signal
+    };
+
+    const response = await requestUrl(requestParams);
 
     const data = response.json ?? JSON.parse(response.text);
     return { content: extractContent(data), usedResponseFormat: useResponseFormat };

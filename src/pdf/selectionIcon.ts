@@ -1,4 +1,8 @@
 import { App } from "obsidian";
+import { setCssProps } from "../ui/css";
+
+const HIDDEN_CLASS = "sll-hidden";
+const INVISIBLE_CLASS = "sll-invisible";
 
 export interface PdfSelectionIconCallbacks {
   onTrigger: (selection: string, anchorRect: DOMRect) => void;
@@ -17,9 +21,8 @@ export class PdfSelectionIcon {
 
   constructor(private app: App, private callbacks: PdfSelectionIconCallbacks) {
     this.icon = document.createElement("div");
-    this.icon.className = "sll-selection-icon";
+    this.icon.className = `sll-selection-icon ${HIDDEN_CLASS}`;
     this.icon.textContent = this.callbacks.getIconText();
-    this.icon.style.display = "none";
 
     this.icon.addEventListener("mousedown", (event) => {
       event.preventDefault();
@@ -112,20 +115,23 @@ export class PdfSelectionIcon {
   }
 
   private show(): void {
-    this.icon.style.display = "flex";
+    this.icon.classList.remove(HIDDEN_CLASS);
   }
 
   private hide(): void {
-    this.icon.style.display = "none";
+    this.icon.classList.add(HIDDEN_CLASS);
   }
 
   private positionIcon(): void {
     const anchorRect = this.lastAnchorRect ?? this.buildAnchorRect();
     if (!anchorRect) return;
 
-    this.icon.style.visibility = "hidden";
-    this.icon.style.left = "0px";
-    this.icon.style.top = "0px";
+    this.icon.classList.remove(HIDDEN_CLASS);
+    this.icon.classList.add(INVISIBLE_CLASS);
+    setCssProps(this.icon, {
+      "--sll-left": "0px",
+      "--sll-top": "0px"
+    });
 
     requestAnimationFrame(() => {
       const rect = this.icon.getBoundingClientRect();
@@ -142,9 +148,11 @@ export class PdfSelectionIcon {
         top = Math.min(maxTop, anchorRect.bottom + 6);
       }
 
-      this.icon.style.left = `${Math.max(8, Math.min(left, maxLeft))}px`;
-      this.icon.style.top = `${Math.max(8, Math.min(top, maxTop))}px`;
-      this.icon.style.visibility = "visible";
+      setCssProps(this.icon, {
+        "--sll-left": `${Math.max(8, Math.min(left, maxLeft))}px`,
+        "--sll-top": `${Math.max(8, Math.min(top, maxTop))}px`
+      });
+      this.icon.classList.remove(INVISIBLE_CLASS);
     });
   }
 }

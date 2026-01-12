@@ -1,4 +1,8 @@
 import { EditorView, ViewPlugin, ViewUpdate } from "@codemirror/view";
+import { setCssProps } from "../ui/css";
+
+const HIDDEN_CLASS = "sll-hidden";
+const INVISIBLE_CLASS = "sll-invisible";
 
 export interface SelectionIconCallbacks {
   onTrigger: (selection: string, contextLine: string, anchorRect: DOMRect) => void;
@@ -23,9 +27,8 @@ export function selectionIconPlugin(callbacks: SelectionIconCallbacks) {
       constructor(view: EditorView) {
         this.view = view;
         this.icon = document.createElement("div");
-        this.icon.className = "sll-selection-icon";
+        this.icon.className = `sll-selection-icon ${HIDDEN_CLASS}`;
         this.icon.textContent = callbacks.getIconText();
-        this.icon.style.display = "none";
         document.body.appendChild(this.icon);
 
         this.icon.addEventListener("mousedown", (event) => {
@@ -87,7 +90,7 @@ export function selectionIconPlugin(callbacks: SelectionIconCallbacks) {
             this.hide();
             return;
           }
-          if (selection === this.lastSelection && this.icon.style.display !== "none") {
+          if (selection === this.lastSelection && !this.icon.classList.contains(HIDDEN_CLASS)) {
             this.positionIcon();
             return;
           }
@@ -115,11 +118,11 @@ export function selectionIconPlugin(callbacks: SelectionIconCallbacks) {
       }
 
       private show(): void {
-        this.icon.style.display = "flex";
+        this.icon.classList.remove(HIDDEN_CLASS);
       }
 
       private hide(): void {
-        this.icon.style.display = "none";
+        this.icon.classList.add(HIDDEN_CLASS);
       }
 
       private positionIcon(): void {
@@ -127,9 +130,12 @@ export function selectionIconPlugin(callbacks: SelectionIconCallbacks) {
         const coords = this.view.coordsAtPos(selection.to);
         if (!coords) return;
 
-        this.icon.style.visibility = "hidden";
-        this.icon.style.left = "0px";
-        this.icon.style.top = "0px";
+        this.icon.classList.remove(HIDDEN_CLASS);
+        this.icon.classList.add(INVISIBLE_CLASS);
+        setCssProps(this.icon, {
+          "--sll-left": "0px",
+          "--sll-top": "0px"
+        });
 
         requestAnimationFrame(() => {
           const rect = this.icon.getBoundingClientRect();
@@ -146,9 +152,11 @@ export function selectionIconPlugin(callbacks: SelectionIconCallbacks) {
             top = Math.min(maxTop, coords.bottom + 6);
           }
 
-          this.icon.style.left = `${Math.max(8, Math.min(left, maxLeft))}px`;
-          this.icon.style.top = `${Math.max(8, Math.min(top, maxTop))}px`;
-          this.icon.style.visibility = "visible";
+          setCssProps(this.icon, {
+            "--sll-left": `${Math.max(8, Math.min(left, maxLeft))}px`,
+            "--sll-top": `${Math.max(8, Math.min(top, maxTop))}px`
+          });
+          this.icon.classList.remove(INVISIBLE_CLASS);
         });
       }
 
@@ -167,9 +175,9 @@ export function selectionIconPlugin(callbacks: SelectionIconCallbacks) {
 
 function isImageSelection(selection: string, contextLine: string): boolean {
   const text = selection.trim();
-  if (/^!\[\[.+\]\]$/.test(text)) return true;
-  if (/^!\[.*\]\(.+\)$/.test(text)) return true;
-  if (/!\[\[.+\]\]/.test(contextLine)) return true;
-  if (/!\[.*\]\(.+\)/.test(contextLine)) return true;
+  if (text.startsWith("![[") && text.endsWith("]]")) return true;
+  if (text.startsWith("![") && text.includes("](") && text.endsWith(")")) return true;
+  if (contextLine.includes("![[") && contextLine.includes("]]")) return true;
+  if (contextLine.includes("![") && contextLine.includes("](")) return true;
   return false;
 }

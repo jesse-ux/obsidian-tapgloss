@@ -1,3 +1,5 @@
+import { setCssProps } from "./css";
+
 export interface WordCardData {
   lemma: string;
   pos: string;
@@ -33,13 +35,11 @@ export class Popover {
 
   showLoading(anchorRect: DOMRect): void {
     this.anchorRect = anchorRect;
-    this.render(`
-      <div class="sll-popover-header">Loading…</div>
-      <div class="sll-popover-body sll-popover-muted">Fetching response</div>
-      <div class="sll-popover-footer">
-        <button class="sll-btn" data-action="close">Close</button>
-      </div>
-    `);
+    const header = this.createDiv("sll-popover-header", "Loading...");
+    const body = this.createDiv("sll-popover-body sll-popover-muted", "Fetching response...");
+    const footer = this.createDiv("sll-popover-footer");
+    footer.appendChild(this.createButton("Close", "sll-btn", () => this.close()));
+    this.render([header, body, footer]);
   }
 
   showWordCard(data: WordCardData, anchorRect: DOMRect): void {
@@ -57,65 +57,68 @@ export class Popover {
       ["superlative", inflections["superlative"]]
     ];
 
-    const tableRows = rows
-      .map(([label, value]) => {
-        const display = value && value.length > 0 ? value : "—";
-        return `<tr><td>${label}</td><td>${display}</td></tr>`;
-      })
-      .join("");
+    const header = this.createDiv("sll-popover-header", `${data.lemma} (${data.pos})`);
+    const body = this.createDiv("sll-popover-body");
+    const meaning = this.createDiv("sll-popover-meaning", data.meaning_zh);
+    const table = document.createElement("table");
+    table.className = "sll-inflections";
+    const tbody = document.createElement("tbody");
+    rows.forEach(([label, value]) => {
+      const display = value && value.length > 0 ? value : "—";
+      const row = document.createElement("tr");
+      const labelCell = document.createElement("td");
+      labelCell.textContent = label;
+      const valueCell = document.createElement("td");
+      valueCell.textContent = display;
+      row.appendChild(labelCell);
+      row.appendChild(valueCell);
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    body.appendChild(meaning);
+    body.appendChild(table);
 
-    this.render(`
-      <div class="sll-popover-header">${escapeHtml(data.lemma)} (${escapeHtml(data.pos)})</div>
-      <div class="sll-popover-body">
-        <div class="sll-popover-meaning">${escapeHtml(data.meaning_zh)}</div>
-        <table class="sll-inflections">
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-      </div>
-      <div class="sll-popover-footer">
-        <button class="sll-btn" data-action="add">Add to Canvas</button>
-        <button class="sll-btn sll-btn-primary" data-action="copy">Copy</button>
-        <button class="sll-btn" data-action="close">Close</button>
-      </div>
-    `);
+    const footer = this.createDiv("sll-popover-footer");
+    footer.appendChild(this.createButton("Add to canvas", "sll-btn", () => this.addHandler?.()));
+    footer.appendChild(this.createButton("Copy", "sll-btn sll-btn-primary", () => this.copyHandler?.()));
+    footer.appendChild(this.createButton("Close", "sll-btn", () => this.close()));
+    this.render([header, body, footer]);
   }
 
   showSentenceCard(data: SentenceCardData, anchorRect: DOMRect): void {
     this.anchorRect = anchorRect;
     this.copyHandler = null;
     this.addHandler = null;
-    const structureBlock = data.structure_zh
-      ? `<div class="sll-popover-section"><div class="sll-popover-label">Structure</div><div>${escapeHtml(
-          data.structure_zh
-        )}</div></div>`
-      : "";
     const issues = data.issues ?? [];
-    const issuesBlock =
-      issues.length > 0
-        ? `<div class="sll-popover-section"><div class="sll-popover-label">Issues</div>${issues
-            .map(
-              (item) =>
-                `<div class="sll-issue"><div class="sll-issue-title">${escapeHtml(
-                  item.issue
-                )}</div><div class="sll-issue-suggestion">${escapeHtml(item.suggestion)}</div></div>`
-            )
-            .join("")}</div>`
-        : "";
-    this.render(`
-      <div class="sll-popover-header">Translation</div>
-      <div class="sll-popover-body">
-        <div class="sll-popover-meaning">${escapeHtml(data.translation_zh)}</div>
-        ${structureBlock}
-        ${issuesBlock}
-      </div>
-      <div class="sll-popover-footer">
-        <button class="sll-btn" data-action="add">Add to Canvas</button>
-        <button class="sll-btn sll-btn-primary" data-action="copy">Copy</button>
-        <button class="sll-btn" data-action="close">Close</button>
-      </div>
-    `);
+    const header = this.createDiv("sll-popover-header", "Translation");
+    const body = this.createDiv("sll-popover-body");
+    const meaning = this.createDiv("sll-popover-meaning", data.translation_zh);
+    body.appendChild(meaning);
+
+    if (data.structure_zh) {
+      const section = this.createDiv("sll-popover-section");
+      section.appendChild(this.createDiv("sll-popover-label", "Structure"));
+      section.appendChild(this.createDiv("", data.structure_zh));
+      body.appendChild(section);
+    }
+
+    if (issues.length > 0) {
+      const issuesSection = this.createDiv("sll-popover-section");
+      issuesSection.appendChild(this.createDiv("sll-popover-label", "Issues"));
+      issues.forEach((item) => {
+        const issue = this.createDiv("sll-issue");
+        issue.appendChild(this.createDiv("sll-issue-title", item.issue));
+        issue.appendChild(this.createDiv("sll-issue-suggestion", item.suggestion));
+        issuesSection.appendChild(issue);
+      });
+      body.appendChild(issuesSection);
+    }
+
+    const footer = this.createDiv("sll-popover-footer");
+    footer.appendChild(this.createButton("Add to canvas", "sll-btn", () => this.addHandler?.()));
+    footer.appendChild(this.createButton("Copy", "sll-btn sll-btn-primary", () => this.copyHandler?.()));
+    footer.appendChild(this.createButton("Close", "sll-btn", () => this.close()));
+    this.render([header, body, footer]);
   }
 
   showError(message: string, actions: PopoverAction[] = [], anchorRect?: DOMRect): void {
@@ -124,28 +127,21 @@ export class Popover {
     }
     this.copyHandler = null;
     this.addHandler = null;
-    const actionButtons = actions
-      .map((action, index) => {
-        const classes = ["sll-btn", action.variant === "danger" ? "sll-btn-danger" : ""]
-          .filter(Boolean)
-          .join(" ");
-        return `<button class="${classes}" data-action="custom-${index}">${escapeHtml(action.label)}</button>`;
-      })
-      .join("");
-
-    this.render(`
-      <div class="sll-popover-header">Error</div>
-      <div class="sll-popover-body sll-popover-muted">${escapeHtml(message)}</div>
-      <div class="sll-popover-footer">
-        ${actionButtons}
-        <button class="sll-btn" data-action="close">Close</button>
-      </div>
-    `);
-
-    actions.forEach((action, index) => {
-      const button = this.container?.querySelector(`[data-action="custom-${index}"]`);
-      button?.addEventListener("click", () => action.onClick());
+    const header = this.createDiv("sll-popover-header", "Error");
+    const body = this.createDiv("sll-popover-body sll-popover-muted", message);
+    const footer = this.createDiv("sll-popover-footer");
+    actions.forEach((action) => {
+      const classes = ["sll-btn", action.variant === "danger" ? "sll-btn-danger" : ""]
+        .filter(Boolean)
+        .join(" ");
+      footer.appendChild(
+        this.createButton(action.label, classes, () => {
+          void action.onClick();
+        })
+      );
     });
+    footer.appendChild(this.createButton("Close", "sll-btn", () => this.close()));
+    this.render([header, body, footer]);
   }
 
   close(): void {
@@ -157,7 +153,13 @@ export class Popover {
     this.onClose?.();
   }
 
-  private render(html: string): void {
+  private render(nodes: Node[]): void {
+    const container = this.ensureContainer();
+    container.replaceChildren(...nodes);
+    this.position();
+  }
+
+  private ensureContainer(): HTMLDivElement {
     if (!this.container) {
       this.container = document.createElement("div");
       this.container.className = "sll-popover";
@@ -165,19 +167,28 @@ export class Popover {
       document.addEventListener("mousedown", this.boundOutsideClick, true);
       document.addEventListener("keydown", this.boundKeydown);
     }
+    return this.container;
+  }
 
-    this.container.innerHTML = html;
-    this.container.querySelectorAll("[data-action='copy']").forEach((el) => {
-      el.addEventListener("click", () => this.copyHandler?.());
-    });
-    this.container.querySelectorAll("[data-action='add']").forEach((el) => {
-      el.addEventListener("click", () => this.addHandler?.());
-    });
-    this.container.querySelectorAll("[data-action='close']").forEach((el) => {
-      el.addEventListener("click", () => this.close());
-    });
+  private createDiv(className: string, text?: string): HTMLDivElement {
+    const div = document.createElement("div");
+    if (className) {
+      div.className = className;
+    }
+    if (typeof text === "string") {
+      div.textContent = text;
+    }
+    return div;
+  }
 
-    this.position();
+  private createButton(label: string, className: string, onClick: () => void): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.className = className;
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      void onClick();
+    });
+    return button;
   }
 
   setCopyHandler(handler: () => void): void {
@@ -192,9 +203,11 @@ export class Popover {
     if (!this.container || !this.anchorRect) return;
 
     const { innerWidth, innerHeight } = window;
-    this.container.style.visibility = "hidden";
-    this.container.style.top = "0px";
-    this.container.style.left = "0px";
+    this.container.classList.add("sll-invisible");
+    setCssProps(this.container, {
+      "--sll-left": "0px",
+      "--sll-top": "0px"
+    });
 
     requestAnimationFrame(() => {
       if (!this.container || !this.anchorRect) return;
@@ -210,9 +223,11 @@ export class Popover {
         top = Math.max(8, this.anchorRect.top - rect.height - 8);
       }
 
-      this.container.style.left = `${left}px`;
-      this.container.style.top = `${top}px`;
-      this.container.style.visibility = "visible";
+      setCssProps(this.container, {
+        "--sll-left": `${left}px`,
+        "--sll-top": `${top}px`
+      });
+      this.container.classList.remove("sll-invisible");
     });
   }
 
@@ -228,13 +243,4 @@ export class Popover {
       this.close();
     }
   }
-}
-
-function escapeHtml(input: string): string {
-  return input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }

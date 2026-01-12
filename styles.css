@@ -1,0 +1,135 @@
+.sll-selection-icon {
+  position: fixed;
+  z-index: 1000;
+  background: var(--sll-icon-bg, #111111);
+  color: var(--sll-icon-text, #f9f6e8);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: var(--sll-icon-size, 13px);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  left: var(--sll-left, 0px);
+  top: var(--sll-top, 0px);
+}
+
+.sll-popover {
+  position: fixed;
+  z-index: 1001;
+  min-width: 240px;
+  max-width: 360px;
+  background: var(--sll-pop-bg, #f9f6e8);
+  color: var(--sll-pop-text, #1e1e1e);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  left: var(--sll-left, 0px);
+  top: var(--sll-top, 0px);
+}
+
+.sll-popover-header {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.sll-popover-body {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.sll-popover-meaning {
+  margin-bottom: 10px;
+}
+
+.sll-popover-section {
+  margin-top: 10px;
+}
+
+.sll-popover-label {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--sll-pop-label, #7a6f56);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sll-issue {
+  margin-bottom: 6px;
+}
+
+.sll-issue-title {
+  font-weight: 600;
+}
+
+.sll-issue-suggestion {
+  color: #3a3a3a;
+}
+
+.sll-popover-muted {
+  color: var(--sll-pop-muted, #5a5a5a);
+}
+
+.sll-inflections {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.sll-inflections td {
+  padding: 2px 0;
+  vertical-align: top;
+}
+
+.sll-inflections td:first-child {
+  color: var(--sll-pop-label, #7a6f56);
+  width: 90px;
+}
+
+.sll-popover-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.sll-btn {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: transparent;
+  color: #1e1e1e;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sll-popover-footer .sll-btn:first-child {
+  margin-right: auto;
+}
+
+.sll-btn-primary {
+  background: #1e1e1e;
+  color: #f9f6e8;
+  border-color: #1e1e1e;
+}
+
+.sll-btn-danger {
+  background: #8c2a2a;
+  color: #f9f6e8;
+  border-color: #8c2a2a;
+}
+
+.sll-hidden {
+  display: none !important;
+}
+
+.sll-invisible {
+  visibility: hidden;
+}

@@ -2,7 +2,16 @@ import { App, TFile } from "obsidian";
 
 interface CanvasData {
   nodes: CanvasNode[];
-  edges: any[];
+  edges: CanvasEdge[];
+}
+
+interface CanvasEdge {
+  id?: string;
+  fromNode?: string;
+  fromSide?: string;
+  toNode?: string;
+  toSide?: string;
+  [key: string]: unknown;
 }
 
 interface CanvasNode {
@@ -30,10 +39,11 @@ export async function appendToCanvas(app: App, rawPath: string, text: string): P
       throw new Error("Canvas path is not a file.");
     }
     const existing = await app.vault.read(file);
-    const parsed = JSON.parse(existing);
+    const parsed = JSON.parse(existing) as unknown;
+    const record = isRecord(parsed) ? parsed : {};
     data = {
-      nodes: Array.isArray(parsed?.nodes) ? parsed.nodes : [],
-      edges: Array.isArray(parsed?.edges) ? parsed.edges : []
+      nodes: Array.isArray(record.nodes) ? (record.nodes as CanvasNode[]) : [],
+      edges: Array.isArray(record.edges) ? (record.edges as CanvasEdge[]) : []
     };
   } catch {
     data = { nodes: [], edges: [] };
@@ -89,4 +99,8 @@ async function ensureParentFolder(app: App, path: string): Promise<void> {
   if (!existing) {
     await app.vault.createFolder(folderPath);
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object");
 }

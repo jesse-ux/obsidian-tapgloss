@@ -30,7 +30,7 @@ npm run build
 
 ## Usage
 
-- Select text in the editor (or PDF) to show the `LLM` icon.
+- Select text in the editor (or PDF) to show the `🤔` icon.
 - Click the icon to run Smart Lookup.
 - Commands (bindable to hotkeys):
   - `Smart Lookup`

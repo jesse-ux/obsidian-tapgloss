@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
 
 export const DEFAULT_WORD_PROMPT = `你是英语学习助手。请严格输出单个 JSON 对象，不要输出任何多余文本、不要 markdown。
 
@@ -81,10 +81,10 @@ export const DEFAULT_SETTINGS: SelectionLookupSettings = {
 };
 
 export class SelectionLookupSettingTab extends PluginSettingTab {
-  private readonly plugin: { settings: SelectionLookupSettings; saveSettings: () => Promise<void> };
+  private readonly plugin: Plugin & { settings: SelectionLookupSettings; saveSettings: () => Promise<void> };
 
-  constructor(app: App, plugin: { settings: SelectionLookupSettings; saveSettings: () => Promise<void> }) {
-    super(app, plugin as any);
+  constructor(app: App, plugin: Plugin & { settings: SelectionLookupSettings; saveSettings: () => Promise<void> }) {
+    super(app, plugin);
     this.plugin = plugin;
   }
 
@@ -93,7 +93,7 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     const t = getLabels(this.plugin.settings.language);
-    containerEl.createEl("h2", { text: t.title });
+    new Setting(containerEl).setName(t.title).setHeading();
 
     new Setting(containerEl)
       .setName(t.apiBaseUrl.name)
@@ -102,9 +102,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("https://api.openai.com")
           .setValue(this.plugin.settings.apiBaseUrl)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.apiBaseUrl = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -115,9 +115,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("sk-...")
           .setValue(this.plugin.settings.apiKey)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.apiKey = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -128,9 +128,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("gpt-4o-mini")
           .setValue(this.plugin.settings.modelId)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.modelId = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -141,10 +141,10 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("28")
           .setValue(String(this.plugin.settings.sentenceLengthThreshold))
-          .onChange(async (value) => {
+          .onChange((value) => {
             const parsed = Number.parseInt(value, 10);
             this.plugin.settings.sentenceLengthThreshold = Number.isFinite(parsed) ? parsed : 28;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -156,9 +156,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
           .addOption("zh", t.language.zh)
           .addOption("en", t.language.en)
           .setValue(this.plugin.settings.language)
-          .onChange(async (value: string) => {
+          .onChange((value: string) => {
             this.plugin.settings.language = value === "en" ? "en" : "zh";
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
             this.display();
           })
       );
@@ -170,9 +170,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("🤔")
           .setValue(this.plugin.settings.iconText)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.iconText = value.trim() || "🤔";
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -183,10 +183,10 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("13")
           .setValue(String(this.plugin.settings.iconSize))
-          .onChange(async (value) => {
+          .onChange((value) => {
             const parsed = Number.parseInt(value, 10);
             this.plugin.settings.iconSize = Number.isFinite(parsed) ? parsed : 13;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -197,9 +197,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("#111111")
           .setValue(this.plugin.settings.iconBgColor)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.iconBgColor = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -210,9 +210,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("#f9f6e8")
           .setValue(this.plugin.settings.iconTextColor)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.iconTextColor = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -223,9 +223,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("#f9f6e8")
           .setValue(this.plugin.settings.popoverBgColor)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.popoverBgColor = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -236,9 +236,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("#1e1e1e")
           .setValue(this.plugin.settings.popoverTextColor)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.popoverTextColor = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -249,9 +249,9 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("TrickyWords.canvas")
           .setValue(this.plugin.settings.canvasPath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.canvasPath = value.trim();
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -259,21 +259,21 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
       .setName(t.responseFormat.name)
       .setDesc(t.responseFormat.desc)
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.enableResponseFormat).onChange(async (value) => {
+        toggle.setValue(this.plugin.settings.enableResponseFormat).onChange((value) => {
           this.plugin.settings.enableResponseFormat = value;
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
         })
       );
 
-    containerEl.createEl("h3", { text: t.wordPrompt.title });
+    new Setting(containerEl).setName(t.wordPrompt.title).setHeading();
     new Setting(containerEl)
       .setName(t.wordPrompt.system)
       .addTextArea((text) =>
         text
           .setValue(this.plugin.settings.wordSystemPrompt)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.wordSystemPrompt = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -282,15 +282,15 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
       .addTextArea((text) =>
         text
           .setValue(this.plugin.settings.wordUserPrompt)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.wordUserPrompt = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
       .addButton((button) =>
-        button.setButtonText(t.wordPrompt.restore).onClick(async () => {
+        button.setButtonText(t.wordPrompt.restore).onClick(() => {
           if (this.plugin.settings.language === "en") {
             this.plugin.settings.wordSystemPrompt = DEFAULT_WORD_PROMPT_EN;
             this.plugin.settings.wordUserPrompt = DEFAULT_WORD_USER_PROMPT_EN;
@@ -298,20 +298,20 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
             this.plugin.settings.wordSystemPrompt = DEFAULT_WORD_PROMPT;
             this.plugin.settings.wordUserPrompt = DEFAULT_WORD_USER_PROMPT;
           }
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
           this.display();
         })
       );
 
-    containerEl.createEl("h3", { text: t.sentencePrompt.title });
+    new Setting(containerEl).setName(t.sentencePrompt.title).setHeading();
     new Setting(containerEl)
       .setName(t.sentencePrompt.system)
       .addTextArea((text) =>
         text
           .setValue(this.plugin.settings.sentenceSystemPrompt)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.sentenceSystemPrompt = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
@@ -320,15 +320,15 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
       .addTextArea((text) =>
         text
           .setValue(this.plugin.settings.sentenceUserPrompt)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.sentenceUserPrompt = value;
-            await this.plugin.saveSettings();
+            void this.plugin.saveSettings();
           })
       );
 
     new Setting(containerEl)
       .addButton((button) =>
-        button.setButtonText(t.sentencePrompt.restore).onClick(async () => {
+        button.setButtonText(t.sentencePrompt.restore).onClick(() => {
           if (this.plugin.settings.language === "en") {
             this.plugin.settings.sentenceSystemPrompt = DEFAULT_SENTENCE_PROMPT_EN;
             this.plugin.settings.sentenceUserPrompt = DEFAULT_SENTENCE_USER_PROMPT_EN;
@@ -336,7 +336,7 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
             this.plugin.settings.sentenceSystemPrompt = DEFAULT_SENTENCE_PROMPT;
             this.plugin.settings.sentenceUserPrompt = DEFAULT_SENTENCE_USER_PROMPT;
           }
-          await this.plugin.saveSettings();
+          void this.plugin.saveSettings();
           this.display();
         })
       );
@@ -346,12 +346,12 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
 function getLabels(language: "zh" | "en") {
   if (language === "en") {
     return {
-      title: "TapGloss Settings",
+      title: "TapGloss settings",
       apiBaseUrl: {
-        name: "API Base URL",
+        name: "API base URL",
         desc: "OpenAI-compatible base URL, e.g. https://api.openai.com or http://localhost:11434"
       },
-      apiKey: { name: "API Key", desc: "Stored in plaintext in Obsidian settings." },
+      apiKey: { name: "API key", desc: "Stored in plaintext in Obsidian settings." },
       modelId: { name: "Model ID", desc: "Example: gpt-4o-mini" },
       sentenceThreshold: {
         name: "Sentence length threshold",
@@ -378,13 +378,13 @@ function getLabels(language: "zh" | "en") {
         desc: "If unsupported by the API, the plugin will auto-fallback."
       },
       wordPrompt: {
-        title: "Word Prompt",
+        title: "Word prompt",
         system: "System prompt",
         user: "User prompt",
         restore: "Restore default word prompts"
       },
       sentencePrompt: {
-        title: "Sentence Prompt",
+        title: "Sentence prompt",
         system: "System prompt",
         user: "User prompt",
         restore: "Restore default sentence prompts"
@@ -394,8 +394,8 @@ function getLabels(language: "zh" | "en") {
 
   return {
     title: "TapGloss 设置",
-    apiBaseUrl: { name: "API Base URL", desc: "OpenAI 兼容地址，例如 https://api.openai.com 或 https://api.moonshot.cn/v1" },
-    apiKey: { name: "API Key", desc: "明文存储在 Obsidian 设置中。" },
+    apiBaseUrl: { name: "API base URL", desc: "OpenAI 兼容地址，例如 https://api.openai.com 或 https://api.moonshot.cn/v1" },
+    apiKey: { name: "API key", desc: "明文存储在 Obsidian 设置中。" },
     modelId: { name: "Model ID", desc: "例如：gpt-4o-mini" },
     sentenceThreshold: { name: "句子判定阈值", desc: "选中文本长度超过阈值将被视为句子。" },
     language: { name: "语言", desc: "控制界面文案与默认提示词。", zh: "中文", en: "英文" },

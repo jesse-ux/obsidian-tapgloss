@@ -5,6 +5,7 @@ import { PdfSelectionIcon } from "./pdf/selectionIcon";
 import { Popover, SentenceCardData, WordCardData } from "./ui/popover";
 import { requestLookup, LookupMode } from "./llm";
 import { appendToCanvas } from "./canvas";
+import { setCssProps } from "./ui/css";
 import {
   DEFAULT_SENTENCE_PROMPT,
   DEFAULT_SENTENCE_PROMPT_EN,
@@ -25,6 +26,17 @@ interface LookupContext {
   anchorRect: DOMRect;
 }
 
+interface EditorWithCm {
+  cm?: EditorView;
+}
+
+interface AppWithSetting {
+  setting?: {
+    open: () => void;
+    openTabById: (id: string) => void;
+  };
+}
+
 export default class SelectionLlmLookupPlugin extends Plugin {
   settings: SelectionLookupSettings = DEFAULT_SETTINGS;
   private popover: Popover | null = null;
@@ -38,13 +50,12 @@ export default class SelectionLlmLookupPlugin extends Plugin {
     await this.loadSettings();
     this.addSettingTab(new SelectionLookupSettingTab(this.app, this));
     this.popover = new Popover(() => this.abortActiveRequest());
-    this.injectStyles();
     this.applyTheme();
 
     this.registerEditorExtension(
       selectionIconPlugin({
         onTrigger: (selection, contextLine, anchorRect) => {
-          this.runLookup({ selection, contextLine, anchorRect }, null);
+          void this.runLookup({ selection, contextLine, anchorRect }, null);
         },
         onSelectionChange: (selection) => {
           if (selection !== this.lastSelection) {
@@ -58,7 +69,7 @@ export default class SelectionLlmLookupPlugin extends Plugin {
 
     this.pdfSelectionIcon = new PdfSelectionIcon(this.app, {
       onTrigger: (selection, anchorRect) => {
-        this.runLookup({ selection, contextLine: "", anchorRect }, null);
+        void this.runLookup({ selection, contextLine: "", anchorRect }, null);
       },
       onSelectionChange: (selection) => {
         if (selection !== this.lastSelection) {
@@ -73,21 +84,21 @@ export default class SelectionLlmLookupPlugin extends Plugin {
 
     this.addCommand({
       id: "smart-lookup",
-      name: "Smart Lookup",
+      name: "Smart lookup",
       editorCallback: (editor) => {
         const context = this.getContextFromEditor(editor.getSelection());
         if (!context) return;
-        this.runLookup(context, null);
+        void this.runLookup(context, null);
       }
     });
 
     this.addCommand({
       id: "translate-selection",
-      name: "Translate Selection",
+      name: "Translate selection",
       editorCallback: (editor) => {
         const context = this.getContextFromEditor(editor.getSelection());
         if (!context) return;
-        this.runLookup(context, "sentence");
+        void this.runLookup(context, "sentence");
       }
     });
   }
@@ -107,126 +118,14 @@ export default class SelectionLlmLookupPlugin extends Plugin {
     this.applyTheme();
   }
 
-  private injectStyles(): void {
-    const style = document.createElement("style");
-    style.textContent = `
-      .sll-selection-icon {
-        position: fixed;
-        z-index: 1000;
-        background: var(--sll-icon-bg, #111111);
-        color: var(--sll-icon-text, #f9f6e8);
-        border-radius: 6px;
-        padding: 4px 6px;
-        font-size: var(--sll-icon-size, 13px);
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
-      .sll-popover {
-        position: fixed;
-        z-index: 1001;
-        min-width: 240px;
-        max-width: 360px;
-        background: var(--sll-pop-bg, #f9f6e8);
-        color: var(--sll-pop-text, #1e1e1e);
-        border-radius: 10px;
-        padding: 12px 14px;
-        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        font-size: 13px;
-      }
-      .sll-popover-header {
-        font-weight: 700;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-      .sll-popover-body {
-        margin-bottom: 10px;
-        line-height: 1.5;
-      }
-      .sll-popover-meaning {
-        margin-bottom: 10px;
-      }
-      .sll-popover-section {
-        margin-top: 10px;
-      }
-      .sll-popover-label {
-        font-weight: 600;
-        font-size: 12px;
-        color: var(--sll-pop-label, #7a6f56);
-        margin-bottom: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .sll-issue {
-        margin-bottom: 6px;
-      }
-      .sll-issue-title {
-        font-weight: 600;
-      }
-      .sll-issue-suggestion {
-        color: #3a3a3a;
-      }
-      .sll-popover-muted {
-        color: var(--sll-pop-muted, #5a5a5a);
-      }
-      .sll-inflections {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12px;
-      }
-      .sll-inflections td {
-        padding: 2px 0;
-        vertical-align: top;
-      }
-      .sll-inflections td:first-child {
-        color: var(--sll-pop-label, #7a6f56);
-        width: 90px;
-      }
-      .sll-popover-footer {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-      }
-      .sll-btn {
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        background: transparent;
-        color: #1e1e1e;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        cursor: pointer;
-      }
-      .sll-popover-footer .sll-btn:first-child {
-        margin-right: auto;
-      }
-      .sll-btn-primary {
-        background: #1e1e1e;
-        color: #f9f6e8;
-        border-color: #1e1e1e;
-      }
-      .sll-btn-danger {
-        background: #8c2a2a;
-        color: #f9f6e8;
-        border-color: #8c2a2a;
-      }
-    `;
-    document.head.appendChild(style);
-    this.register(() => style.remove());
-  }
-
   private applyTheme(): void {
-    const root = document.documentElement;
-    root.style.setProperty("--sll-icon-bg", this.settings.iconBgColor || "#111111");
-    root.style.setProperty("--sll-icon-text", this.settings.iconTextColor || "#f9f6e8");
-    root.style.setProperty("--sll-icon-size", `${this.settings.iconSize || 13}px`);
-    root.style.setProperty("--sll-pop-bg", this.settings.popoverBgColor || "#f9f6e8");
-    root.style.setProperty("--sll-pop-text", this.settings.popoverTextColor || "#1e1e1e");
+    setCssProps(document.documentElement, {
+      "--sll-icon-bg": this.settings.iconBgColor || "#111111",
+      "--sll-icon-text": this.settings.iconTextColor || "#f9f6e8",
+      "--sll-icon-size": `${this.settings.iconSize || 13}px`,
+      "--sll-pop-bg": this.settings.popoverBgColor || "#f9f6e8",
+      "--sll-pop-text": this.settings.popoverTextColor || "#1e1e1e"
+    });
   }
 
   private getContextFromEditor(selection: string): LookupContext | null {
@@ -237,7 +136,7 @@ export default class SelectionLlmLookupPlugin extends Plugin {
     }
 
     const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-    const editorView = activeView ? ((activeView.editor as any).cm as EditorView | undefined) : undefined;
+    const editorView = activeView ? (activeView.editor as EditorWithCm).cm : undefined;
     const anchorRect =
       editorView && editorView.state.selection.main
         ? getAnchorRect(editorView)
@@ -257,9 +156,9 @@ export default class SelectionLlmLookupPlugin extends Plugin {
     if (!this.isConfigured()) {
       this.popover.showError("Not configured.", [
         {
-          label: "Open Settings",
+          label: "Open settings",
           onClick: () => {
-            const setting = (this.app as any).setting;
+            const setting = (this.app as AppWithSetting).setting;
             setting?.open();
             setting?.openTabById(this.manifest.id);
           },
@@ -320,7 +219,9 @@ export default class SelectionLlmLookupPlugin extends Plugin {
       if (this.activeRequestKey !== cacheKey) {
         return;
       }
-      this.handleRequestError(error, () => this.runLookup(context, forceMode), context.anchorRect);
+      this.handleRequestError(error, () => {
+        void this.runLookup(context, forceMode);
+      }, context.anchorRect);
     }
   }
 
@@ -331,19 +232,19 @@ export default class SelectionLlmLookupPlugin extends Plugin {
       const wordData = result as WordCardData;
       this.popover.showWordCard(wordData, anchorRect);
       this.popover.setCopyHandler(() => {
-        copyToClipboard(buildWordCopy(wordData));
+        void copyToClipboard(buildWordCopy(wordData));
       });
       this.popover.setAddHandler(() => {
-        this.addToCanvas(buildWordCanvas(wordData));
+        void this.addToCanvas(buildWordCanvas(wordData));
       });
     } else {
       const sentenceData = result as SentenceCardData;
       this.popover.showSentenceCard(sentenceData, anchorRect);
       this.popover.setCopyHandler(() => {
-        copyToClipboard(sentenceData.translation_zh);
+        void copyToClipboard(sentenceData.translation_zh);
       });
       this.popover.setAddHandler(() => {
-        this.addToCanvas(buildSentenceCanvas(sentenceData));
+        void this.addToCanvas(buildSentenceCanvas(sentenceData));
       });
     }
   }
@@ -353,29 +254,14 @@ export default class SelectionLlmLookupPlugin extends Plugin {
     this.popover.showError("Invalid JSON output.", [
       {
         label: "Copy raw output",
-        onClick: () => copyToClipboard(raw)
+        onClick: () => {
+          void copyToClipboard(raw);
+        }
       },
       {
         label: "Restore default prompt",
-        onClick: async () => {
-          if (mode === "word") {
-            if (this.settings.language === "en") {
-              this.settings.wordSystemPrompt = DEFAULT_WORD_PROMPT_EN;
-              this.settings.wordUserPrompt = DEFAULT_WORD_USER_PROMPT_EN;
-            } else {
-              this.settings.wordSystemPrompt = DEFAULT_WORD_PROMPT;
-              this.settings.wordUserPrompt = DEFAULT_WORD_USER_PROMPT;
-            }
-          } else {
-            if (this.settings.language === "en") {
-              this.settings.sentenceSystemPrompt = DEFAULT_SENTENCE_PROMPT_EN;
-              this.settings.sentenceUserPrompt = DEFAULT_SENTENCE_USER_PROMPT_EN;
-            } else {
-              this.settings.sentenceSystemPrompt = DEFAULT_SENTENCE_PROMPT;
-              this.settings.sentenceUserPrompt = DEFAULT_SENTENCE_USER_PROMPT;
-            }
-          }
-          await this.saveSettings();
+        onClick: () => {
+          void this.restoreDefaultPrompt(mode);
         },
         variant: "primary"
       }
@@ -384,14 +270,14 @@ export default class SelectionLlmLookupPlugin extends Plugin {
 
   private handleRequestError(error: unknown, retry: () => void, anchorRect: DOMRect): void {
     if (!this.popover) return;
-    const status = (error as any)?.status ?? (error as any)?.response?.status;
+    const status = getErrorStatus(error);
     if (status === 401 || status === 403) {
-      this.popover.showError("Auth failed. Please check your API Key.", [
+      this.popover.showError("Auth failed. Check your API key.", [
         { label: "Retry", onClick: retry, variant: "primary" }
       ], anchorRect);
       return;
     }
-    const message = isTimeoutError(error) ? "Request timed out." : (error as Error)?.message || "Request failed.";
+    const message = isTimeoutError(error) ? "Request timed out." : getErrorMessage(error) || "Request failed.";
     this.popover.showError(message, [{ label: "Retry", onClick: retry, variant: "primary" }], anchorRect);
   }
 
@@ -415,6 +301,27 @@ export default class SelectionLlmLookupPlugin extends Plugin {
       new Notice((error as Error)?.message || "Failed to add to canvas.");
     }
   }
+
+  private async restoreDefaultPrompt(mode: LookupMode): Promise<void> {
+    if (mode === "word") {
+      if (this.settings.language === "en") {
+        this.settings.wordSystemPrompt = DEFAULT_WORD_PROMPT_EN;
+        this.settings.wordUserPrompt = DEFAULT_WORD_USER_PROMPT_EN;
+      } else {
+        this.settings.wordSystemPrompt = DEFAULT_WORD_PROMPT;
+        this.settings.wordUserPrompt = DEFAULT_WORD_USER_PROMPT;
+      }
+    } else {
+      if (this.settings.language === "en") {
+        this.settings.sentenceSystemPrompt = DEFAULT_SENTENCE_PROMPT_EN;
+        this.settings.sentenceUserPrompt = DEFAULT_SENTENCE_USER_PROMPT_EN;
+      } else {
+        this.settings.sentenceSystemPrompt = DEFAULT_SENTENCE_PROMPT;
+        this.settings.sentenceUserPrompt = DEFAULT_SENTENCE_USER_PROMPT;
+      }
+    }
+    await this.saveSettings();
+  }
 }
 
 function normalizeSelection(selection: string): string {
@@ -429,18 +336,48 @@ function classifySelection(selection: string, threshold: number): LookupMode {
 }
 
 function cleanWordSelection(selection: string): string {
-  return selection.replace(/^[\s.,?!:;"'()\[\]{}<>]+/, "").replace(/[\s.,?!:;"'()\[\]{}<>]+$/, "");
+  const trimChars = new Set([
+    " ",
+    "\n",
+    "\r",
+    "\t",
+    ".",
+    ",",
+    "?",
+    "!",
+    ":",
+    ";",
+    "\"",
+    "'",
+    "(",
+    ")",
+    "[",
+    "]",
+    "{",
+    "}",
+    "<",
+    ">"
+  ]);
+  let start = 0;
+  let end = selection.length;
+  while (start < end && trimChars.has(selection[start])) {
+    start += 1;
+  }
+  while (end > start && trimChars.has(selection[end - 1])) {
+    end -= 1;
+  }
+  return selection.slice(start, end);
 }
 
-function tryParseJson(content: string): any | null {
+function tryParseJson(content: string): unknown | null {
   try {
-    return JSON.parse(content);
+    return JSON.parse(content) as unknown;
   } catch {
     const start = content.indexOf("{");
     const end = content.lastIndexOf("}");
     if (start !== -1 && end !== -1 && end > start) {
       try {
-        return JSON.parse(content.slice(start, end + 1));
+        return JSON.parse(content.slice(start, end + 1)) as unknown;
       } catch {
         return null;
       }
@@ -449,36 +386,45 @@ function tryParseJson(content: string): any | null {
   }
 }
 
-function normalizeWordResult(parsed: any, fallbackSelection: string): WordCardData {
-  const inflections = parsed?.inflections ?? {};
+function normalizeWordResult(parsed: unknown, fallbackSelection: string): WordCardData {
+  const record = isRecord(parsed) ? parsed : {};
+  const inflections = isRecord(record.inflections) ? record.inflections : {};
+  const readInflection = (key: string) => {
+    const value = inflections[key];
+    return typeof value === "string" ? value : "";
+  };
   return {
-    lemma: parsed?.lemma || fallbackSelection,
-    pos: parsed?.pos || "—",
-    meaning_zh: parsed?.meaning_zh || parsed?.meaning_en || "—",
+    lemma: readString(record, "lemma") || fallbackSelection,
+    pos: readString(record, "pos") || "—",
+    meaning_zh: readString(record, "meaning_zh") || readString(record, "meaning_en") || "—",
     inflections: {
-      "3sg": inflections["3sg"] ?? "",
-      past: inflections["past"] ?? "",
-      pp: inflections["pp"] ?? "",
-      ing: inflections["ing"] ?? "",
-      plural: inflections["plural"] ?? "",
-      comparative: inflections["comparative"] ?? "",
-      superlative: inflections["superlative"] ?? ""
+      "3sg": readInflection("3sg"),
+      past: readInflection("past"),
+      pp: readInflection("pp"),
+      ing: readInflection("ing"),
+      plural: readInflection("plural"),
+      comparative: readInflection("comparative"),
+      superlative: readInflection("superlative")
     }
   };
 }
 
-function normalizeSentenceResult(parsed: any): SentenceCardData {
-  const issues = Array.isArray(parsed?.issues) ? parsed.issues : [];
+function normalizeSentenceResult(parsed: unknown): SentenceCardData {
+  const record = isRecord(parsed) ? parsed : {};
+  const issues = Array.isArray(record.issues) ? record.issues : [];
   return {
-    translation_zh: parsed?.translation_zh || parsed?.translation_en || "—",
-    structure_zh: parsed?.structure_zh || parsed?.structure_en || "",
-    selection: parsed?.selection || "",
+    translation_zh: readString(record, "translation_zh") || readString(record, "translation_en") || "—",
+    structure_zh: readString(record, "structure_zh") || readString(record, "structure_en") || "",
+    selection: readString(record, "selection") || "",
     issues: issues
-      .map((item: any) => ({
-        issue: item?.issue || "",
-        suggestion: item?.suggestion || ""
-      }))
-      .filter((item: { issue: string; suggestion: string }) => item.issue || item.suggestion)
+      .map((item) => {
+        if (!isRecord(item)) return null;
+        return {
+          issue: readString(item, "issue") || "",
+          suggestion: readString(item, "suggestion") || ""
+        };
+      })
+      .filter((item): item is { issue: string; suggestion: string } => Boolean(item && (item.issue || item.suggestion)))
   };
 }
 
@@ -533,24 +479,48 @@ async function copyToClipboard(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
   } catch {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    textarea.remove();
+    new Notice("Copy failed. Use the context menu to copy.");
   }
 }
 
 function isAbortError(error: unknown): boolean {
-  if (!error) return false;
-  const name = (error as any).name ?? "";
-  return name === "AbortError";
+  return getErrorName(error) === "AbortError";
 }
 
 function isTimeoutError(error: unknown): boolean {
-  const message = (error as any)?.message ?? "";
+  const message = getErrorMessage(error);
   return typeof message === "string" && message.toLowerCase().includes("timeout");
+}
+
+function getErrorName(error: unknown): string {
+  if (!isRecord(error)) return "";
+  const name = error.name;
+  return typeof name === "string" ? name : "";
+}
+
+function getErrorMessage(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (!isRecord(error)) return "";
+  const message = error.message;
+  return typeof message === "string" ? message : "";
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+  if (!isRecord(error)) return undefined;
+  const status = error.status;
+  if (typeof status === "number") return status;
+  const response = error.response;
+  if (isRecord(response) && typeof response.status === "number") return response.status;
+  return undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object");
+}
+
+function readString(record: Record<string, unknown>, key: string): string | undefined {
+  const value = record[key];
+  return typeof value === "string" ? value : undefined;
 }
 
 function getAnchorRect(view: EditorView): DOMRect {
