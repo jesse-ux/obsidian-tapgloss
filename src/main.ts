@@ -369,15 +369,17 @@ function cleanWordSelection(selection: string): string {
   return selection.slice(start, end);
 }
 
-function tryParseJson(content: string): unknown | null {
+function tryParseJson(content: string): Record<string, unknown> | null {
   try {
-    return JSON.parse(content) as unknown;
+    const parsed = JSON.parse(content);
+    return isRecord(parsed) ? parsed : null;
   } catch {
     const start = content.indexOf("{");
     const end = content.lastIndexOf("}");
     if (start !== -1 && end !== -1 && end > start) {
       try {
-        return JSON.parse(content.slice(start, end + 1)) as unknown;
+        const parsed = JSON.parse(content.slice(start, end + 1));
+        return isRecord(parsed) ? parsed : null;
       } catch {
         return null;
       }
@@ -386,17 +388,16 @@ function tryParseJson(content: string): unknown | null {
   }
 }
 
-function normalizeWordResult(parsed: unknown, fallbackSelection: string): WordCardData {
-  const record = isRecord(parsed) ? parsed : {};
-  const inflections = isRecord(record.inflections) ? record.inflections : {};
+function normalizeWordResult(parsed: Record<string, unknown>, fallbackSelection: string): WordCardData {
+  const inflections = isRecord(parsed.inflections) ? parsed.inflections : {};
   const readInflection = (key: string) => {
     const value = inflections[key];
     return typeof value === "string" ? value : "";
   };
   return {
-    lemma: readString(record, "lemma") || fallbackSelection,
-    pos: readString(record, "pos") || "—",
-    meaning_zh: readString(record, "meaning_zh") || readString(record, "meaning_en") || "—",
+    lemma: readString(parsed, "lemma") || fallbackSelection,
+    pos: readString(parsed, "pos") || "—",
+    meaning_zh: readString(parsed, "meaning_zh") || readString(parsed, "meaning_en") || "—",
     inflections: {
       "3sg": readInflection("3sg"),
       past: readInflection("past"),
@@ -409,13 +410,12 @@ function normalizeWordResult(parsed: unknown, fallbackSelection: string): WordCa
   };
 }
 
-function normalizeSentenceResult(parsed: unknown): SentenceCardData {
-  const record = isRecord(parsed) ? parsed : {};
-  const issues = Array.isArray(record.issues) ? record.issues : [];
+function normalizeSentenceResult(parsed: Record<string, unknown>): SentenceCardData {
+  const issues = Array.isArray(parsed.issues) ? parsed.issues : [];
   return {
-    translation_zh: readString(record, "translation_zh") || readString(record, "translation_en") || "—",
-    structure_zh: readString(record, "structure_zh") || readString(record, "structure_en") || "",
-    selection: readString(record, "selection") || "",
+    translation_zh: readString(parsed, "translation_zh") || readString(parsed, "translation_en") || "—",
+    structure_zh: readString(parsed, "structure_zh") || readString(parsed, "structure_en") || "",
+    selection: readString(parsed, "selection") || "",
     issues: issues
       .map((item) => {
         if (!isRecord(item)) return null;
@@ -527,7 +527,8 @@ function getAnchorRect(view: EditorView): DOMRect {
   const selection = view.state.selection.main;
   const coords = view.coordsAtPos(selection.to);
   if (!coords) {
-    return fallbackAnchorRect(view.dom.closest(".workspace") as HTMLElement | null);
+    const workspace = view.dom.closest(".workspace");
+    return fallbackAnchorRect(workspace instanceof HTMLElement ? workspace : null);
   }
   return new DOMRect(coords.left, coords.top, coords.right - coords.left, coords.bottom - coords.top);
 }

@@ -113,7 +113,7 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
       .setDesc(t.apiKey.desc)
       .addText((text) =>
         text
-          .setPlaceholder("sk-...")
+          .setPlaceholder("Example: sk-...")
           .setValue(this.plugin.settings.apiKey)
           .onChange((value) => {
             this.plugin.settings.apiKey = value.trim();
@@ -126,7 +126,7 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
       .setDesc(t.modelId.desc)
       .addText((text) =>
         text
-          .setPlaceholder("gpt-4o-mini")
+          .setPlaceholder("Example: gpt-4o-mini")
           .setValue(this.plugin.settings.modelId)
           .onChange((value) => {
             this.plugin.settings.modelId = value.trim();
@@ -247,7 +247,7 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
       .setDesc(t.canvasPath.desc)
       .addText((text) =>
         text
-          .setPlaceholder("TrickyWords.canvas")
+          .setPlaceholder("Example: TrickyWords.canvas")
           .setValue(this.plugin.settings.canvasPath)
           .onChange((value) => {
             this.plugin.settings.canvasPath = value.trim();
