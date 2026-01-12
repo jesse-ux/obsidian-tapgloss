@@ -1,4 +1,5 @@
 import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { testLlmConnection } from "./llm";
 
 export const DEFAULT_WORD_PROMPT = `你是英语学习助手。请严格输出单个 JSON 对象，不要输出任何多余文本、不要 markdown。
 
@@ -133,6 +134,27 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
             void this.plugin.saveSettings();
           })
       );
+
+    let statusRow: HTMLDivElement;
+    let statusIcon: HTMLSpanElement;
+    let statusText: HTMLSpanElement;
+    let errorBox: HTMLDivElement;
+
+    const testSetting = new Setting(containerEl)
+      .setName(t.testConnection.name)
+      .setDesc(t.testConnection.desc)
+      .addButton((button) => {
+        button.setButtonText(t.testConnection.button);
+        button.onClick(() => {
+          if (!statusRow || !statusIcon || !statusText || !errorBox) return;
+          void this.runConnectionTest(button, statusRow, statusIcon, statusText, errorBox);
+        });
+      });
+
+    statusRow = testSetting.settingEl.createDiv("sll-test-status-row sll-hidden");
+    statusIcon = statusRow.createSpan("sll-test-status-icon");
+    statusText = statusRow.createSpan("sll-test-status-text");
+    errorBox = testSetting.settingEl.createDiv("sll-test-error sll-hidden");
 
     new Setting(containerEl)
       .setName(t.sentenceThreshold.name)
@@ -341,6 +363,54 @@ export class SelectionLookupSettingTab extends PluginSettingTab {
         })
       );
   }
+
+  private async runConnectionTest(
+    button: { setDisabled: (disabled: boolean) => void; setButtonText: (text: string) => void },
+    statusRow: HTMLDivElement,
+    statusIcon: HTMLSpanElement,
+    statusText: HTMLSpanElement,
+    errorBox: HTMLDivElement
+  ): Promise<void> {
+    const t = getLabels(this.plugin.settings.language).testConnection;
+    button.setDisabled(true);
+    button.setButtonText(t.testingButton);
+    statusRow.classList.remove("sll-hidden", "sll-test-status--ok", "sll-test-status--error");
+    statusRow.classList.add("sll-test-status--ok");
+    statusText.textContent = t.testingStatus;
+    errorBox.classList.add("sll-hidden");
+    errorBox.textContent = "";
+
+    if (!this.plugin.settings.apiBaseUrl || !this.plugin.settings.apiKey || !this.plugin.settings.modelId) {
+      statusRow.classList.remove("sll-test-status--ok", "sll-test-status--error");
+      statusRow.classList.add("sll-test-status--error");
+      statusText.textContent = t.failedStatus;
+      errorBox.textContent = t.missingConfig;
+      errorBox.classList.remove("sll-hidden");
+      button.setDisabled(false);
+      button.setButtonText(t.button);
+      return;
+    }
+
+    const result = await testLlmConnection({
+      baseUrl: this.plugin.settings.apiBaseUrl,
+      apiKey: this.plugin.settings.apiKey,
+      modelId: this.plugin.settings.modelId
+    });
+
+    statusRow.classList.remove("sll-test-status--ok", "sll-test-status--error");
+    if (result.ok) {
+      statusRow.classList.add("sll-test-status--ok");
+      statusText.textContent = t.okStatus;
+    } else {
+      statusRow.classList.add("sll-test-status--error");
+      statusText.textContent = t.failedStatus;
+      errorBox.textContent = result.message;
+      errorBox.classList.remove("sll-hidden");
+    }
+
+    button.setDisabled(false);
+    button.setButtonText(t.button);
+  }
 }
 
 function getLabels(language: "zh" | "en") {
@@ -377,6 +447,16 @@ function getLabels(language: "zh" | "en") {
         name: "Enable response_format (JSON)",
         desc: "If unsupported by the API, the plugin will auto-fallback."
       },
+      testConnection: {
+        name: "Test connection",
+        desc: "Send a short request to verify the configuration.",
+        button: "Test connection",
+        testingButton: "Testing...",
+        testingStatus: "Testing connection...",
+        okStatus: "Connection ok.",
+        failedStatus: "Connection failed.",
+        missingConfig: "Fill in the base URL, API key, and model ID."
+      },
       wordPrompt: {
         title: "Word prompt",
         system: "System prompt",
@@ -407,6 +487,16 @@ function getLabels(language: "zh" | "en") {
     popoverTextColor: { name: "气泡文字色", desc: "气泡的文字颜色。" },
     canvasPath: { name: "Canvas 路径", desc: "保存卡片的默认 .canvas 文件（如 TrickyWords.canvas）。" },
     responseFormat: { name: "启用 response_format (JSON)", desc: "若 API 不支持，将自动回退。" },
+    testConnection: {
+      name: "测试连接",
+      desc: "发送一个短请求以验证配置是否可用。",
+      button: "测试连接",
+      testingButton: "正在测试...",
+      testingStatus: "正在测试连接...",
+      okStatus: "连接成功。",
+      failedStatus: "连接失败。",
+      missingConfig: "请填写 API Base URL、API Key 和 Model ID。"
+    },
     wordPrompt: { title: "单词提示词", system: "System prompt", user: "User prompt", restore: "恢复默认单词提示词" },
     sentencePrompt: { title: "句子提示词", system: "System prompt", user: "User prompt", restore: "恢复默认句子提示词" }
   };

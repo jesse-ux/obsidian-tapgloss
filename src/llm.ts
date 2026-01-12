@@ -21,6 +21,11 @@ export interface LlmResponse {
   usedResponseFormat: boolean;
 }
 
+export interface LlmConnectionResult {
+  ok: boolean;
+  message: string;
+}
+
 function normalizeBaseUrl(baseUrl: string): string {
   const trimmed = baseUrl.replace(/\/+$/, "");
   if (trimmed.endsWith("/v1")) {
@@ -106,4 +111,61 @@ export async function requestLookup(options: LlmRequestOptions): Promise<LlmResp
   }
 
   return await doRequest(false);
+}
+
+export async function testLlmConnection(options: {
+  baseUrl: string;
+  apiKey: string;
+  modelId: string;
+  signal?: AbortSignal;
+}): Promise<LlmConnectionResult> {
+  const url = `${normalizeBaseUrl(options.baseUrl)}/chat/completions`;
+  const requestBody = {
+    model: options.modelId,
+    messages: [
+      { role: "system", content: "You are a connectivity test." },
+      { role: "user", content: "ping" }
+    ],
+    temperature: 0,
+    max_tokens: 2
+  };
+
+  const requestParams: RequestUrlParamWithTimeout = {
+    url,
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${options.apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(requestBody),
+    timeout: 10000,
+    signal: options.signal
+  };
+
+  try {
+    const response = await requestUrl(requestParams);
+    const payload = response.json ?? safeJsonParse(response.text);
+    if (response.status >= 200 && response.status < 300) {
+      return { ok: true, message: "Connection ok." };
+    }
+    const errorMessage = extractErrorMessage(payload) || `Request failed (${response.status}).`;
+    return { ok: false, message: errorMessage };
+  } catch (error) {
+    const message = (error as { message?: string } | null)?.message ?? "Request failed.";
+    return { ok: false, message };
+  }
+}
+
+function safeJsonParse(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function extractErrorMessage(data: unknown): string {
+  if (!data || typeof data !== "object") return "";
+  const error = (data as { error?: { message?: string } }).error;
+  return typeof error?.message === "string" ? error.message : "";
 }
